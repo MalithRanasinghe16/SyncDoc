@@ -43,6 +43,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+  const [showPlaceholder, setShowPlaceholder] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#000000');
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<number>();
@@ -113,32 +114,49 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
 
   // Set initial content when component mounts or document changes
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== document.content) {
-      editorRef.current.innerHTML = document.content || '<p>Start writing your document...</p>';
-    }
-  }, [document.content]);
-
-  // Handle placeholder text
-  useEffect(() => {
     if (editorRef.current) {
-      const isEmpty = !content || content.trim() === '' || content === '<p><br></p>' || content === '<p>Start writing your document...</p>';
-      if (isEmpty && document.content === '') {
-        editorRef.current.innerHTML = '<p style="color: #9ca3af;">Start writing your document...</p>';
+      if (document.content && document.content.trim() !== '') {
+        editorRef.current.innerHTML = document.content;
+        setShowPlaceholder(false);
+      } else {
+        editorRef.current.innerHTML = '';
+        setShowPlaceholder(true);
       }
     }
-  }, [content, document.content]);
+  }, [document.content]);
 
   const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
     const newContent = e.currentTarget.innerHTML;
     
-    // Don't save placeholder text
-    if (newContent === '<p style="color: #9ca3af;">Start writing your document...</p>' || 
-        newContent === '<p>Start writing your document...</p>') {
-      setContent('');
-    } else {
-      setContent(newContent);
-    }
+    // Clean up empty paragraph tags that browsers sometimes add
+    const cleanContent = newContent === '<p><br></p>' || newContent === '<br>' ? '' : newContent;
+    
+    setContent(cleanContent);
     setIsTyping(true);
+    setShowPlaceholder(cleanContent.trim() === '');
+  };
+
+  const handleFocus = () => {
+    if (editorRef.current && (!content || content.trim() === '')) {
+      editorRef.current.innerHTML = '';
+      setShowPlaceholder(false);
+    }
+  };
+
+  const handleBlur = () => {
+    if (editorRef.current && (!content || content.trim() === '')) {
+      setShowPlaceholder(true);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Clear placeholder on any key press if editor is empty
+    if (showPlaceholder && e.key.length === 1) {
+      setShowPlaceholder(false);
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
+    }
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -510,17 +528,27 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
               dangerouslySetInnerHTML={{ __html: content }}
             />
           ) : (
-            <div
-              ref={editorRef}
-              contentEditable
-              onInput={handleContentChange}
-              className={`${isFullscreen ? 'h-full' : 'min-h-[600px]'} outline-none text-gray-900 leading-relaxed prose prose-lg max-w-none focus:ring-0 border border-gray-200 rounded-lg p-6 focus:border-blue-300 transition-colors`}
-              style={{
-                fontSize: '16px',
-                lineHeight: '1.75'
-              }}
-              suppressContentEditableWarning={true}
-            />
+            <div className="relative">
+              {showPlaceholder && (
+                <div className="absolute inset-0 p-6 pointer-events-none text-gray-400 italic">
+                  Start writing your document...
+                </div>
+              )}
+              <div
+                ref={editorRef}
+                contentEditable
+                onInput={handleContentChange}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
+                className={`${isFullscreen ? 'h-full' : 'min-h-[600px]'} outline-none text-gray-900 leading-relaxed prose prose-lg max-w-none focus:ring-0 border border-gray-200 rounded-lg p-6 focus:border-blue-300 transition-colors`}
+                style={{
+                  fontSize: '16px',
+                  lineHeight: '1.75'
+                }}
+                suppressContentEditableWarning={true}
+              />
+            </div>
           )}
         </div>
         

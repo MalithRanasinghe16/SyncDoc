@@ -75,7 +75,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
     const newDoc: Document = {
       id: Date.now().toString(),
       title,
-      content: '<h1>' + title + '</h1><p>Start writing your document here...</p>',
+      content: '', // Start with empty content
       ownerId: user?.id || '1',
       collaborators: [],
       createdAt: new Date(),
