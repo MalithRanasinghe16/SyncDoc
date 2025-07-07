@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google'; 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import Login from './components/Login';
@@ -10,6 +11,8 @@ import Settings from './components/Settings';
 import { Document } from './types';
 
 type AppView = 'dashboard' | 'editor' | 'versions' | 'settings';
+
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -82,11 +85,13 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <DocumentProvider>
-        <AppContent />
-      </DocumentProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={clientId}> {/* ✅ Wrap everything here */}
+      <AuthProvider>
+        <DocumentProvider>
+          <AppContent />
+        </DocumentProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 
