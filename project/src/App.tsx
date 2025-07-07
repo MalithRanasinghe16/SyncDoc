@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import Login from './components/Login';
@@ -57,7 +57,6 @@ function AppContent() {
             document={currentDocument}
             onBack={() => setCurrentView('dashboard')}
             onShowVersions={() => setCurrentView('versions')}
-            onShowSettings={() => setCurrentView('settings')}
           />
         ) : null;
       case 'versions':

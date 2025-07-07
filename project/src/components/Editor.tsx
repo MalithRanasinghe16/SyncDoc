@@ -1,12 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDocuments } from '../contexts/DocumentContext';
-import { useAuth } from '../contexts/AuthContext';
 import { 
   ArrowLeft, 
   Share2, 
-  Users, 
   History, 
-  Settings,
   Bold,
   Italic,
   Underline,
@@ -22,7 +19,11 @@ import {
   Palette,
   Link,
   Image,
-  Plus
+  Plus,
+  Quote,
+  Maximize2,
+  Minimize2,
+  FileText
 } from 'lucide-react';
 import { Document } from '../types';
 
@@ -30,20 +31,21 @@ interface EditorProps {
   document: Document;
   onBack: () => void;
   onShowVersions: () => void;
-  onShowSettings: () => void;
 }
 
-export default function Editor({ document, onBack, onShowVersions, onShowSettings }: EditorProps) {
-  const { updateDocument, saveVersion, userPresence } = useDocuments();
-  const { user } = useAuth();
+export default function Editor({ document, onBack, onShowVersions }: EditorProps) {
+  const { updateDocument, saveVersion } = useDocuments();
   const [content, setContent] = useState(document.content);
   const [title, setTitle] = useState(document.title);
   const [isPreview, setIsPreview] = useState(false);
   const [showFormatting, setShowFormatting] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
+  const [selectedColor, setSelectedColor] = useState('#000000');
   const editorRef = useRef<HTMLDivElement>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<number>();
 
   // Auto-save functionality
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
       clearTimeout(saveTimeoutRef.current);
     }
     
-    saveTimeoutRef.current = setTimeout(() => {
+    saveTimeoutRef.current = window.setTimeout(() => {
       if (content !== document.content || title !== document.title) {
         updateDocument(document.id, { content, title });
         saveVersion(document.id, content);
@@ -67,8 +69,75 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
     };
   }, [content, title, document.id, document.content, document.title, updateDocument, saveVersion]);
 
+  // Word count effect
+  useEffect(() => {
+    const textContent = content.replace(/<[^>]*>/g, '').trim();
+    const words = textContent ? textContent.split(/\s+/).length : 0;
+    setWordCount(words);
+  }, [content]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'b':
+            e.preventDefault();
+            formatText('bold');
+            break;
+          case 'i':
+            e.preventDefault();
+            formatText('italic');
+            break;
+          case 'u':
+            e.preventDefault();
+            formatText('underline');
+            break;
+          case 's':
+            e.preventDefault();
+            saveNow();
+            break;
+          case 'Enter':
+            if (e.shiftKey) {
+              e.preventDefault();
+              setIsFullscreen(!isFullscreen);
+            }
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
+  // Set initial content when component mounts or document changes
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== document.content) {
+      editorRef.current.innerHTML = document.content || '<p>Start writing your document...</p>';
+    }
+  }, [document.content]);
+
+  // Handle placeholder text
+  useEffect(() => {
+    if (editorRef.current) {
+      const isEmpty = !content || content.trim() === '' || content === '<p><br></p>' || content === '<p>Start writing your document...</p>';
+      if (isEmpty && document.content === '') {
+        editorRef.current.innerHTML = '<p style="color: #9ca3af;">Start writing your document...</p>';
+      }
+    }
+  }, [content, document.content]);
+
   const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
-    setContent(e.currentTarget.innerHTML);
+    const newContent = e.currentTarget.innerHTML;
+    
+    // Don't save placeholder text
+    if (newContent === '<p style="color: #9ca3af;">Start writing your document...</p>' || 
+        newContent === '<p>Start writing your document...</p>') {
+      setContent('');
+    } else {
+      setContent(newContent);
+    }
     setIsTyping(true);
   };
 
@@ -77,11 +146,68 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
     setIsTyping(true);
   };
 
+  // Save and restore cursor position
+  const saveCursorPosition = () => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && editorRef.current) {
+      const range = selection.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(editorRef.current);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      return preCaretRange.toString().length;
+    }
+    return 0;
+  };
+
+  const restoreCursorPosition = (position: number) => {
+    if (!editorRef.current) return;
+    
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    let currentPosition = 0;
+    const walker = window.document.createTreeWalker(
+      editorRef.current,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    let node;
+    while (node = walker.nextNode()) {
+      const nodeLength = node.textContent?.length || 0;
+      if (currentPosition + nodeLength >= position) {
+        const range = window.document.createRange();
+        range.setStart(node, position - currentPosition);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        break;
+      }
+      currentPosition += nodeLength;
+    }
+  };
+
   const formatText = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
+    const cursorPos = saveCursorPosition();
+    window.document.execCommand(command, false, value);
     if (editorRef.current) {
       setContent(editorRef.current.innerHTML);
+      // Small delay to allow DOM to update
+      setTimeout(() => restoreCursorPosition(cursorPos), 0);
     }
+  };
+
+  const insertHeading = (level: number) => {
+    formatText('formatBlock', `h${level}`);
+  };
+
+  const insertBlockquote = () => {
+    formatText('formatBlock', 'blockquote');
+  };
+
+  const changeTextColor = (color: string) => {
+    setSelectedColor(color);
+    formatText('foreColor', color);
   };
 
   const insertLink = () => {
@@ -89,6 +215,26 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
     if (url) {
       formatText('createLink', url);
     }
+  };
+
+  const exportAsHTML = () => {
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = window.document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'document'}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const saveNow = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    updateDocument(document.id, { content, title });
+    saveVersion(document.id, content);
+    setLastSaved(new Date());
+    setIsTyping(false);
   };
 
   const mockCollaborators = [
@@ -109,7 +255,7 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* Header */}
       <div className="border-b border-gray-200 bg-white sticky top-0 z-40">
         <div className="flex items-center justify-between px-6 py-4">
@@ -129,10 +275,14 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
                 className="text-lg font-semibold text-gray-900 bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
                 placeholder="Untitled Document"
               />
-              <div className="flex items-center space-x-2 text-sm text-gray-500 px-2">
+              <div className="flex items-center space-x-4 text-sm text-gray-500 px-2">
                 <span>
                   {isTyping ? 'Typing...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : 'All changes saved'}
                 </span>
+                <span>•</span>
+                <span>{wordCount} words</span>
+                <span>•</span>
+                <span>{content.replace(/<[^>]*>/g, '').length} characters</span>
                 {isTyping && <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />}
               </div>
             </div>
@@ -188,34 +338,73 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
           </div>
         </div>
 
-        {/* Formatting toolbar */}
+        {/* Enhanced Formatting toolbar */}
         {!isPreview && showFormatting && (
-          <div className="border-t border-gray-200 px-6 py-3">
-            <div className="flex items-center space-x-1">
+          <div className="border-t border-gray-200 px-6 py-3 bg-gray-50">
+            <div className="flex items-center space-x-2 flex-wrap gap-2">
+              {/* Headings */}
+              <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
+                <button
+                  onClick={() => insertHeading(1)}
+                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  title="Heading 1"
+                >
+                  H1
+                </button>
+                <button
+                  onClick={() => insertHeading(2)}
+                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  title="Heading 2"
+                >
+                  H2
+                </button>
+                <button
+                  onClick={() => insertHeading(3)}
+                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  title="Heading 3"
+                >
+                  H3
+                </button>
+              </div>
+
+              {/* Text formatting */}
               <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
                 <button
                   onClick={() => formatText('bold')}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                  title="Bold"
+                  title="Bold (Ctrl+B)"
                 >
                   <Bold className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => formatText('italic')}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                  title="Italic"
+                  title="Italic (Ctrl+I)"
                 >
                   <Italic className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => formatText('underline')}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                  title="Underline"
+                  title="Underline (Ctrl+U)"
                 >
                   <Underline className="w-4 h-4" />
                 </button>
               </div>
 
+              {/* Text Color */}
+              <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => changeTextColor(e.target.value)}
+                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                  title="Text Color"
+                />
+                <Palette className="w-4 h-4 text-gray-500" />
+              </div>
+
+              {/* Lists */}
               <div className="flex items-center space-x-1 border-r border-gray-300 px-3">
                 <button
                   onClick={() => formatText('insertUnorderedList')}
@@ -231,8 +420,16 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
                 >
                   <ListOrdered className="w-4 h-4" />
                 </button>
+                <button
+                  onClick={insertBlockquote}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  title="Quote"
+                >
+                  <Quote className="w-4 h-4" />
+                </button>
               </div>
 
+              {/* Alignment */}
               <div className="flex items-center space-x-1 border-r border-gray-300 px-3">
                 <button
                   onClick={() => formatText('justifyLeft')}
@@ -257,7 +454,8 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
                 </button>
               </div>
 
-              <div className="flex items-center space-x-1">
+              {/* Insert */}
+              <div className="flex items-center space-x-1 border-r border-gray-300 px-3">
                 <button
                   onClick={insertLink}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
@@ -273,31 +471,75 @@ export default function Editor({ document, onBack, onShowVersions, onShowSetting
                   <Image className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Actions */}
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={saveNow}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  title="Save Now"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={exportAsHTML}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  title="Export as HTML"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Editor content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {isPreview ? (
-          <div 
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
-        ) : (
-          <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleContentChange}
-            dangerouslySetInnerHTML={{ __html: content }}
-            className="min-h-[600px] outline-none text-gray-900 leading-relaxed prose prose-lg max-w-none focus:ring-0"
-            style={{
-              fontSize: '16px',
-              lineHeight: '1.75'
-            }}
-          />
-        )}
+      {/* Enhanced Editor content */}
+      <div className={`${isFullscreen ? 'h-full flex flex-col' : ''}`}>
+        <div className={`${isFullscreen ? 'flex-1' : ''} max-w-4xl mx-auto px-6 py-8`}>
+          {isPreview ? (
+            <div 
+              className="prose prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          ) : (
+            <div
+              ref={editorRef}
+              contentEditable
+              onInput={handleContentChange}
+              className={`${isFullscreen ? 'h-full' : 'min-h-[600px]'} outline-none text-gray-900 leading-relaxed prose prose-lg max-w-none focus:ring-0 border border-gray-200 rounded-lg p-6 focus:border-blue-300 transition-colors`}
+              style={{
+                fontSize: '16px',
+                lineHeight: '1.75'
+              }}
+              suppressContentEditableWarning={true}
+            />
+          )}
+        </div>
+        
+        {/* Status bar */}
+        <div className="border-t border-gray-200 bg-gray-50 px-6 py-2 mt-4">
+          <div className="max-w-4xl mx-auto flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center space-x-4">
+              <span>Document: {title || 'Untitled'}</span>
+              <span>•</span>
+              <span>Modified: {document.updatedAt.toLocaleDateString()}</span>
+              <span>•</span>
+              <span>Auto-save: {isTyping ? 'Pending...' : 'Enabled'}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <FileText className="w-4 h-4" />
+              <span>{wordCount} words, {content.replace(/<[^>]*>/g, '').length} characters</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Floating action button */}
