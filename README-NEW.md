@@ -102,7 +102,7 @@ A modern, real-time collaborative document editor built with React, TypeScript, 
 
 ```
 SyncDoc/
-├── backend/                 # Express.js backend
+├── backend/                # Express.js backend
 │   ├── models/             # Mongoose models
 │   ├── routes/             # API routes
 │   ├── middleware/         # Custom middleware
