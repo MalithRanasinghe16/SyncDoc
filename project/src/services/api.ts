@@ -102,15 +102,10 @@ class ApiService {
     return response;
   }
 
-  async loginWithGoogle(googleData: {
-    googleId: string;
-    email: string;
-    name: string;
-    avatar?: string;
-  }): Promise<LoginResponse> {
+  async loginWithGoogle(access_token: string): Promise<LoginResponse> {
     const response = await this.request<LoginResponse>('/auth/google', {
       method: 'POST',
-      body: JSON.stringify(googleData),
+      body: JSON.stringify({ access_token }),
     });
 
     if (response.token) {

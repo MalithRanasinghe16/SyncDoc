@@ -142,20 +142,12 @@ router.post('/login', [
 });
 
 // @route   POST /api/auth/google
-// @desc    Google OAuth login
+// @desc    Google OAuth login with server-side verification
 // @access  Public
 router.post('/google', [
-  body('googleId')
+  body('access_token')
     .notEmpty()
-    .withMessage('Google ID is required'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Name is required')
+    .withMessage('Google access token is required')
 ], async (req, res) => {
   try {
     // Check for validation errors
@@ -167,7 +159,23 @@ router.post('/google', [
       });
     }
 
-    const { googleId, email, name, avatar } = req.body;
+    const { access_token } = req.body;
+
+    // Verify token with Google and get user info
+    const googleResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${access_token}`
+      }
+    });
+
+    if (!googleResponse.ok) {
+      return res.status(401).json({
+        message: 'Invalid Google access token'
+      });
+    }
+
+    const googleUser = await googleResponse.json();
+    const { id: googleId, email, name, picture: avatar } = googleUser;
 
     // Check if user exists with Google ID
     let user = await User.findOne({ googleId });

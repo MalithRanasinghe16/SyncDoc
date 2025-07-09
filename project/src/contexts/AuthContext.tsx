@@ -2,6 +2,25 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import apiService from '../services/api';
 
+// Extend Window interface for Google OAuth
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { access_token?: string; error?: string }) => void;
+          }) => {
+            requestAccessToken: () => void;
+          };
+        };
+      };
+    };
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
@@ -72,9 +91,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // This would typically integrate with Google OAuth
-      // For now, we'll simulate it
-      throw new Error('Google OAuth integration needed');
+      // Use Google Identity Services
+      if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
+        return new Promise<void>((resolve, reject) => {
+          window.google!.accounts.oauth2.initTokenClient({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            scope: 'openid email profile',
+            callback: async (response: any) => {
+              try {
+                if (response.access_token) {
+                  const apiResponse = await apiService.loginWithGoogle(response.access_token);
+                  setUser(apiResponse.user);
+                  resolve();
+                } else {
+                  reject(new Error('No access token received from Google'));
+                }
+              } catch (error) {
+                reject(error);
+              }
+            },
+          }).requestAccessToken();
+        });
+      } else {
+        throw new Error('Google OAuth not loaded. Please refresh the page.');
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Google login failed');
       throw error;
