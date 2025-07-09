@@ -29,8 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
   Replace,
-  Focus,
-  Zap
+  Focus
 } from 'lucide-react';
 import { Document } from '../types';
 
@@ -42,6 +41,23 @@ interface EditorProps {
 
 export default function Editor({ document, onBack, onShowVersions }: EditorProps) {
   const { updateDocument, saveVersion } = useDocuments();
+  
+  // Helper function to format dates (same as in Dashboard)
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', date, error);
+      return 'Unknown date';
+    }
+  };
   const [content, setContent] = useState(document.content);
   const [title, setTitle] = useState(document.title);
   const [isPreview, setIsPreview] = useState(false);
@@ -63,7 +79,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
   
   // Focus Mode state
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [focusOpacity, setFocusOpacity] = useState(0.3);
+  const [focusOpacity] = useState(0.3);
   
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<number>();
@@ -1158,7 +1174,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
               <div className="flex items-center space-x-4">
                 <span>Document: {title || 'Untitled'}</span>
                 <span>•</span>
-                <span>Modified: {document.updatedAt.toLocaleDateString()}</span>
+                <span>Modified: {formatDate(document.updatedAt)}</span>
                 <span>•</span>
                 <span>Auto-save: {isTyping ? 'Pending...' : 'Enabled'}</span>
               </div>
