@@ -162,11 +162,33 @@ router.post('/google', [
     const { access_token } = req.body;
 
     // Verify token with Google and get user info
-    const googleResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: {
-        Authorization: `Bearer ${access_token}`
+    const fetchWithTimeout = (url, options, timeout = 5000) => {
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out')), timeout)
+        )
+      ]);
+    };
+
+    let googleResponse;
+    try {
+      googleResponse = await fetchWithTimeout('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${access_token}`
+        }
+      });
+    } catch (error) {
+      if (error.message === 'Request timed out') {
+        return res.status(504).json({
+          message: 'Google API request timed out'
+        });
       }
-    });
+      return res.status(503).json({
+        message: 'Network error while contacting Google API',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
 
     if (!googleResponse.ok) {
       return res.status(401).json({
