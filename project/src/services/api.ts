@@ -8,10 +8,17 @@ interface ApiResponse<T = any> {
   errors?: Array<{ msg: string; param: string }>;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  // Add other properties as needed
+}
+
 interface LoginResponse {
   message: string;
   token: string;
-  user: any;
+  user: User;
 }
 
 class ApiService {
