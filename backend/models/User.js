@@ -23,11 +23,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: function() {
-      // Generate a default avatar URL based on user's initials
-      const initials = this.name.split(' ').map(n => n[0]).join('');
-      return `https://ui-avatars.com/api/?name=${initials}&background=3b82f6&color=ffffff&size=150`;
-    }
+    default: null // Avatar will be set in pre-save middleware if not provided
   },
   googleId: {
     type: String,
