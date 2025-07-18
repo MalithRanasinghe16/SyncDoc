@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 import { User } from '../types';
 import apiService from '../services/api';
 
@@ -86,6 +88,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
+
+  const validateToken = async (accessToken: string): Promise<boolean> => {
+    try {
+      const res = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`
+      );
+      return res.status === 200;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      try {
+        const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
+
+        const googleUser: User = {
+          id: res.data.sub,
+          name: res.data.name,
+          email: res.data.email,
+          avatar: res.data.picture,
+          isOnline: true,
+          lastSeen: new Date(),
+        };
+
+        setUser(googleUser);
+        setToken(tokenResponse.access_token);
+        localStorage.setItem('collabdoc_user', JSON.stringify(googleUser));
+        localStorage.setItem('collabdoc_token', tokenResponse.access_token);
+      } catch (err) {
+        console.error('Google login failed', err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google login error:', error);
+    },
+  });
 
   const loginWithGoogle = async () => {
     setIsLoading(true);

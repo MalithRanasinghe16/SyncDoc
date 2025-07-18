@@ -1,5 +1,5 @@
 {
-  "name": "collabdoc",
+  "name": "syncdoc",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,6 +13,7 @@
     "@react-oauth/google": "^0.12.2",
     "@types/react-router-dom": "^5.3.3",
     "google-auth-library": "^10.1.0",
+    "axios": "^1.10.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
