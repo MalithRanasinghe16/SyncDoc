@@ -4,14 +4,14 @@ echo.
 
 :: Start Backend
 echo 📦 Starting Backend Server...
-start "SyncDoc Backend" cmd /k "cd /d \"d:\PlayGround\Document Editor\SyncDoc\backend\" && npm run dev"
+start "SyncDoc Backend" cmd /k "cd /d \"%~dp0backend\" && npm run dev"
 
 :: Wait a moment for backend to start
 timeout /t 3 > nul
 
 :: Start Frontend
 echo 🌐 Starting Frontend Development Server...
-start "SyncDoc Frontend" cmd /k "cd /d \"d:\PlayGround\Document Editor\SyncDoc\project\" && npm run dev"
+start "SyncDoc Frontend" cmd /k "cd /d \"%~dp0project\" && npm run dev"
 
 echo.
 echo ✅ Both servers are starting...
