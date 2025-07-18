@@ -9,12 +9,9 @@ import {
   Clock,
   Users,
   Search,
-  Filter,
   Grid,
   List,
-  Star,
-  Trash2,
-  Copy
+  Trash2
 } from 'lucide-react';
 import { Document } from '../types';
 
@@ -69,18 +66,18 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Documents</h1>
-            <p className="text-gray-600">Manage and collaborate on your documents</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Documents</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage and collaborate on your documents</p>
           </div>
           
           <button
             onClick={() => setShowCreateModal(true)}
-            className="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 shadow-lg hover:shadow-xl"
+            className="mt-4 md:mt-0 bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center space-x-2 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
             <span>New Document</span>
@@ -91,20 +88,20 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search documents..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent w-64"
               />
             </div>
             
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as 'all' | 'owned' | 'shared')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             >
               <option value="all">All Documents</option>
               <option value="owned">Owned by me</option>
@@ -116,7 +113,7 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+                viewMode === 'grid' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               <Grid className="w-5 h-5" />
@@ -124,7 +121,7 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+                viewMode === 'list' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               <List className="w-5 h-5" />
@@ -135,14 +132,14 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
         {/* Documents grid/list */}
         {filteredDocuments.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-            <p className="text-gray-600 mb-6">
+            <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No documents found</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               {searchTerm ? 'Try adjusting your search terms' : 'Create your first document to get started'}
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors"
             >
               Create New Document
             </button>
@@ -157,29 +154,29 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
               <div
                 key={doc.id}
                 onClick={() => onOpenDocument(doc)}
-                className={`bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer group ${
+                className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-lg transition-all cursor-pointer group ${
                   viewMode === 'list' ? 'flex items-center p-4' : 'p-6'
                 }`}
               >
                 {viewMode === 'grid' ? (
                   <>
                     <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <FileText className="w-6 h-6 text-blue-600" />
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                        <FileText className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div className="relative">
                         <button
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <MoreVertical className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
                     
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{doc.title}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{doc.title}</h3>
                     
-                    <div className="flex items-center text-sm text-gray-500 mb-3">
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
                       <Clock className="w-4 h-4 mr-1" />
                       <span>{formatDate(doc.updatedAt)}</span>
                     </div>
@@ -187,10 +184,10 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         {doc.isShared && (
-                          <Share2 className="w-4 h-4 text-green-500" />
+                          <Share2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                         )}
                         {doc.collaborators.length > 0 && (
-                          <div className="flex items-center text-sm text-gray-500">
+                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <Users className="w-4 h-4 mr-1" />
                             <span>{doc.collaborators.length}</span>
                           </div>
@@ -199,7 +196,7 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                       
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, e)}
-                        className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -208,13 +205,13 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                 ) : (
                   <>
                     <div className="flex items-center space-x-4 flex-1">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                        <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{doc.title}</h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">{doc.title}</h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                           <span>{formatDate(doc.updatedAt)}</span>
                           {doc.collaborators.length > 0 && (
                             <div className="flex items-center">
@@ -223,7 +220,7 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                             </div>
                           )}
                           {doc.isShared && (
-                            <div className="flex items-center text-green-600">
+                            <div className="flex items-center text-emerald-600 dark:text-emerald-400">
                               <Share2 className="w-4 h-4 mr-1" />
                               <span>Shared</span>
                             </div>
@@ -235,13 +232,13 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={(e) => e.stopPropagation()}
-                        className="p-2 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <MoreVertical className="w-5 h-5" />
                       </button>
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, e)}
-                        className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -257,15 +254,15 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
       {/* Create document modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New Document</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create New Document</h3>
             
             <input
               type="text"
               value={newDocTitle}
               onChange={(e) => setNewDocTitle(e.target.value)}
               placeholder="Enter document title..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-6"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent mb-6"
               onKeyPress={(e) => e.key === 'Enter' && handleCreateDocument()}
               autoFocus
             />
@@ -276,14 +273,14 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
                   setShowCreateModal(false);
                   setNewDocTitle('');
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateDocument}
                 disabled={!newDocTitle.trim()}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create
               </button>

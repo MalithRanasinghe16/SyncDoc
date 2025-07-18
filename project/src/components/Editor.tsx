@@ -723,15 +723,15 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
   ];
 
   return (
-    <div className={`min-h-screen bg-white ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${isFocusMode ? 'focus-mode-container' : ''}`}>
+    <div className={`min-h-screen bg-white dark:bg-gray-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${isFocusMode ? 'focus-mode-container' : ''}`}>
       {/* Header - Hidden in focus mode */}
       {!isFocusMode && (
-        <div className="border-b border-gray-200 bg-white sticky top-0 z-40">
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-40">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -741,10 +741,10 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
                 type="text"
                 value={title}
                 onChange={handleTitleChange}
-                className="text-lg font-semibold text-gray-900 bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
+                className="text-lg font-semibold text-gray-900 dark:text-white bg-transparent border-none outline-none focus:bg-gray-50 dark:focus:bg-gray-800 px-2 py-1 rounded"
                 placeholder="Untitled Document"
               />
-              <div className="flex items-center space-x-4 text-sm text-gray-500 px-2">
+              <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 px-2">
                 <span>
                   {isTyping ? 'Typing...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : 'All changes saved'}
                 </span>
@@ -752,7 +752,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
                 <span>{wordCount} words</span>
                 <span>•</span>
                 <span>{content.replace(/<[^>]*>/g, '').length} characters</span>
-                {isTyping && <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />}
+                {isTyping && <div className="w-1 h-1 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-pulse" />}
               </div>
             </div>
           </div>
@@ -785,7 +785,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setIsPreview(!isPreview)}
-                className="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center space-x-2"
+                className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center space-x-2"
               >
                 {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 <span className="hidden md:inline">{isPreview ? 'Edit' : 'Preview'}</span>
@@ -793,13 +793,13 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
               
               <button
                 onClick={onShowVersions}
-                className="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex items-center space-x-2"
+                className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <History className="w-4 h-4" />
                 <span className="hidden md:inline">History</span>
               </button>
               
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+              <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2">
                 <Share2 className="w-4 h-4" />
                 <span>Share</span>
               </button>
@@ -809,27 +809,27 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
 
         {/* Enhanced Formatting toolbar */}
         {!isPreview && showFormatting && (
-          <div className="border-t border-gray-200 px-6 py-3 bg-gray-50">
+          <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-3 bg-gray-50 dark:bg-gray-800">
             <div className="flex items-center space-x-2 flex-wrap gap-2">
               {/* Headings */}
-              <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
+              <div className="flex items-center space-x-1 border-r border-gray-300 dark:border-gray-600 pr-3">
                 <button
                   onClick={() => insertHeading(1)}
-                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  className="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm font-medium"
                   title="Heading 1"
                 >
                   H1
                 </button>
                 <button
                   onClick={() => insertHeading(2)}
-                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  className="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm font-medium"
                   title="Heading 2"
                 >
                   H2
                 </button>
                 <button
                   onClick={() => insertHeading(3)}
-                  className="px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors text-sm font-medium"
+                  className="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm font-medium"
                   title="Heading 3"
                 >
                   H3
@@ -837,24 +837,24 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
               </div>
 
               {/* Text formatting */}
-              <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
+              <div className="flex items-center space-x-1 border-r border-gray-300 dark:border-gray-600 pr-3">
                 <button
                   onClick={() => formatText('bold')}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   title="Bold (Ctrl+B)"
                 >
                   <Bold className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => formatText('italic')}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   title="Italic (Ctrl+I)"
                 >
                   <Italic className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => formatText('underline')}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   title="Underline (Ctrl+U)"
                 >
                   <Underline className="w-4 h-4" />
@@ -862,12 +862,12 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
               </div>
 
               {/* Text Color */}
-              <div className="flex items-center space-x-1 border-r border-gray-300 pr-3">
+              <div className="flex items-center space-x-1 border-r border-gray-300 dark:border-gray-600 pr-3">
                 <input
                   type="color"
                   value={selectedColor}
                   onChange={(e) => changeTextColor(e.target.value)}
-                  className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                  className="w-8 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                   title="Text Color"
                 />
                 <Palette className="w-4 h-4 text-gray-500" />
