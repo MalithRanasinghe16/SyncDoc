@@ -12,17 +12,12 @@ import {
   Monitor,
   Save,
   Trash2,
-  EyeOff,
-  ArrowLeft
+  EyeOff
 } from 'lucide-react';
 
 type Tab = 'general' | 'appearance' | 'notifications' | 'account';
 
-interface SettingsProps {
-  onBack?: () => void;
-}
-
-export default function Settings({ onBack }: SettingsProps) {
+export default function Settings() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('general');
@@ -59,20 +54,9 @@ export default function Settings({ onBack }: SettingsProps) {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center space-x-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                title="Back to Dashboard"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account and preferences</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account and preferences</p>
           </div>
         </div>
 

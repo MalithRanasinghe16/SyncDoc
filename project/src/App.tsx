@@ -66,7 +66,7 @@ function AppContent() {
       case 'versions':
         return <VersionHistory onBack={() => setCurrentView('editor')} />;
       case 'settings':
-        return <Settings onBack={() => setCurrentView('dashboard')} />;
+        return <Settings />;
       default:
         return <Dashboard onOpenDocument={handleOpenDocument} />;
     }
