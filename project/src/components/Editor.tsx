@@ -29,8 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
   Replace,
-  Focus,
-  Zap
+  Focus
 } from 'lucide-react';
 import { Document } from '../types';
 
@@ -63,7 +62,7 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
   
   // Focus Mode state
   const [isFocusMode, setIsFocusMode] = useState(false);
-  const [focusOpacity, setFocusOpacity] = useState(0.3);
+  const focusOpacity = 0.3;
   
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<number>();
@@ -657,8 +656,8 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
         }
       }
     } catch (error) {
-      // If highlighting fails, just continue
-      console.warn('Focus mode highlighting failed:', error);
+      // Silently fail if highlighting encounters an error
+      // This prevents breaking the focus mode functionality
     }
   };
 

@@ -240,7 +240,10 @@ export default function Settings({ onBack }: SettingsProps) {
 
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
-                    onClick={() => console.log('Saving preferences:', preferences)}
+                    onClick={() => {
+                      // Save preferences to localStorage or backend
+                      localStorage.setItem('editorPreferences', JSON.stringify(preferences));
+                    }}
                     className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2"
                   >
                     <Save className="w-4 h-4" />
@@ -330,7 +333,10 @@ export default function Settings({ onBack }: SettingsProps) {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Account Actions</h3>
                   <div className="space-y-3">
                     <button
-                      onClick={() => console.log('Change password')}
+                      onClick={() => {
+                        // TODO: Implement password change functionality
+                        alert('Password change functionality would be implemented here');
+                      }}
                       className="w-full text-left px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-center justify-between">
@@ -343,7 +349,10 @@ export default function Settings({ onBack }: SettingsProps) {
                     </button>
 
                     <button
-                      onClick={() => console.log('Export data')}
+                      onClick={() => {
+                        // TODO: Implement data export functionality
+                        alert('Data export functionality would be implemented here');
+                      }}
                       className="w-full text-left px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-center justify-between">
@@ -358,8 +367,8 @@ export default function Settings({ onBack }: SettingsProps) {
                     <button
                       onClick={() => {
                         if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                          console.log('Deleting account...');
-                          // In a real app, this would delete the account
+                          // TODO: Implement account deletion functionality
+                          alert('Account deletion would be implemented here');
                         }
                       }}
                       className="w-full text-left px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
