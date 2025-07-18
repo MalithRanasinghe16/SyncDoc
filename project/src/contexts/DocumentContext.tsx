@@ -17,7 +17,7 @@ interface DocumentContextType {
   loadDocument: (id: string) => Promise<void>;
   saveVersion: (documentId: string, content: string, changes?: string) => Promise<void>;
   loadVersions: (documentId: string) => Promise<void>;
-  restoreVersion: (versionId: string) => void;
+  restoreVersion: (versionId: string) => Promise<void>;
   updatePresence: (presence: UserPresence) => void;
   refreshDocuments: () => Promise<void>;
 }
@@ -165,10 +165,10 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const restoreVersion = (versionId: string) => {
+  const restoreVersion = async (versionId: string) => {
     const version = versions.find(v => v.id === versionId);
     if (version && currentDocument) {
-      updateDocument(currentDocument.id, { content: version.content });
+      await updateDocument(currentDocument.id, { content: version.content });
     }
   };
 

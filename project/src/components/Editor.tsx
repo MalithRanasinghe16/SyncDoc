@@ -54,7 +54,6 @@ export default function Editor({ document, onBack, onShowVersions }: EditorProps
       
       return dateObj.toLocaleDateString();
     } catch (error) {
-      console.error('Error formatting date:', date, error);
       return 'Unknown date';
     }
   };

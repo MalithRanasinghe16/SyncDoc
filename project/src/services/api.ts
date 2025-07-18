@@ -136,6 +136,16 @@ class ApiService {
     return this.request('/auth/me');
   }
 
+  async deleteAccount(): Promise<void> {
+    try {
+      await this.request('/auth/delete-account', {
+        method: 'DELETE',
+      });
+    } finally {
+      this.removeAuthToken();
+    }
+  }
+
   // Document methods
   async getDocuments(params?: {
     page?: number;

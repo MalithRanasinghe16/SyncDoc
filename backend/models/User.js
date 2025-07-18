@@ -61,9 +61,8 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ googleId: 1 });
+// Only add indexes that are not already created by unique: true
+// email and googleId already have indexes due to unique: true
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

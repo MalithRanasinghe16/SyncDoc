@@ -103,7 +103,7 @@ documentSchema.index({ 'collaborators.user': 1 });
 documentSchema.index({ title: 'text', content: 'text' }); // Text search
 documentSchema.index({ createdAt: -1 });
 documentSchema.index({ updatedAt: -1 });
-documentSchema.index({ 'shareSettings.shareLink': 1 });
+// shareSettings.shareLink already indexed due to unique: true, sparse: true
 
 // Pre-save middleware to update word and character counts
 documentSchema.pre('save', function(next) {

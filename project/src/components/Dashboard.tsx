@@ -52,7 +52,6 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
         setShowCreateModal(false);
         onOpenDocument(newDoc);
       } catch (error) {
-        console.error('Failed to create document:', error);
         // Error is already handled by DocumentContext
       } finally {
         setIsCreating(false);
@@ -66,7 +65,6 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
       try {
         await deleteDocument(docId);
       } catch (error) {
-        console.error('Failed to delete document:', error);
         // Error is already handled by DocumentContext
       }
     }
@@ -90,7 +88,6 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
       if (days < 7) return `${days} days ago`;
       return dateObj.toLocaleDateString();
     } catch (error) {
-      console.error('Error formatting date:', date, error);
       return 'Unknown date';
     }
   };
@@ -309,10 +306,17 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
               </button>
               <button
                 onClick={handleCreateDocument}
-                disabled={!newDocTitle.trim()}
-                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!newDocTitle.trim() || isCreating}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Create
+                {isCreating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Create'
+                )}
               </button>
             </div>
           </div>

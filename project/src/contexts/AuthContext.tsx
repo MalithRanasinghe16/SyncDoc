@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useGoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
 import { User } from '../types';
 import apiService from '../services/api';
 
@@ -29,6 +27,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -40,6 +39,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to ensure user object has all required properties
+  const normalizeUser = (apiUser: any): User => ({
+    id: apiUser.id,
+    name: apiUser.name,
+    email: apiUser.email,
+    avatar: apiUser.avatar || '',
+    isOnline: apiUser.isOnline ?? true,
+    lastSeen: apiUser.lastSeen || new Date(),
+  });
+
   useEffect(() => {
     // Check for stored token and get current user
     const checkAuth = async () => {
@@ -47,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const token = localStorage.getItem('syncdoc_token');
         if (token) {
           const response = await apiService.getCurrentUser();
-          setUser(response.user);
+          setUser(normalizeUser(response.user));
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -66,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const response = await apiService.register(name, email, password);
-      setUser(response.user);
+      setUser(normalizeUser(response.user));
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
       throw error;
@@ -80,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const response = await apiService.login(email, password);
-      setUser(response.user);
+      setUser(normalizeUser(response.user));
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
       throw error;
@@ -88,51 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-
-  const validateToken = async (accessToken: string): Promise<boolean> => {
-    try {
-      const res = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`
-      );
-      return res.status === 200;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setIsLoading(true);
-      try {
-        const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: {
-            Authorization: `Bearer ${tokenResponse.access_token}`,
-          },
-        });
-
-        const googleUser: User = {
-          id: res.data.sub,
-          name: res.data.name,
-          email: res.data.email,
-          avatar: res.data.picture,
-          isOnline: true,
-          lastSeen: new Date(),
-        };
-
-        setUser(googleUser);
-        setToken(tokenResponse.access_token);
-        localStorage.setItem('collabdoc_user', JSON.stringify(googleUser));
-        localStorage.setItem('collabdoc_token', tokenResponse.access_token);
-      } catch (err) {
-        console.error('Google login failed', err);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error('Google login error:', error);
-    },
-  });
 
   const loginWithGoogle = async () => {
     setIsLoading(true);
@@ -148,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               try {
                 if (response.access_token) {
                   const apiResponse = await apiService.loginWithGoogle(response.access_token);
-                  setUser(apiResponse.user);
+                  setUser(normalizeUser(apiResponse.user));
                   resolve();
                 } else {
                   reject(new Error('No access token received from Google'));
@@ -182,6 +146,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiService.deleteAccount();
+      setUser(null);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Account deletion failed');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -189,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle, 
       register, 
       logout, 
+      deleteAccount,
       isLoading, 
       error 
     }}>

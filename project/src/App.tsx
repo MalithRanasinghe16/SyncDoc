@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { GoogleOAuthProvider } from '@react-oauth/google'; 
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -13,12 +12,18 @@ import { Document } from './types';
 
 type AppView = 'dashboard' | 'editor' | 'versions' | 'settings';
 
-const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [currentDocument, setCurrentDocument] = useState<Document | null>(null);
+
+  // Reset to dashboard whenever user changes (login/logout/different user)
+  useEffect(() => {
+    if (user) {
+      setCurrentView('dashboard');
+      setCurrentDocument(null);
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -51,18 +56,20 @@ function AppContent() {
     setCurrentView(view);
   };
 
-  const renderCurrentView = () => {
+  const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard onOpenDocument={handleOpenDocument} />;
       case 'editor':
         return currentDocument ? (
-          <Editor
-            document={currentDocument}
+          <Editor 
+            document={currentDocument} 
             onBack={() => setCurrentView('dashboard')}
             onShowVersions={() => setCurrentView('versions')}
           />
-        ) : null;
+        ) : (
+          <Dashboard onOpenDocument={handleOpenDocument} />
+        );
       case 'versions':
         return <VersionHistory onBack={() => setCurrentView('editor')} />;
       case 'settings':
@@ -72,26 +79,26 @@ function AppContent() {
     }
   };
 
-  // Don't show layout for editor view to maximize writing space
-  if (currentView === 'editor' || currentView === 'versions') {
-    return renderCurrentView();
-  }
-
   return (
-    <Layout currentPage={currentView} onNavigate={handleNavigate}>
-      {renderCurrentView()}
+    <Layout 
+      currentPage={currentView === 'versions' ? 'editor' : currentView} 
+      onNavigate={handleNavigate}
+    >
+      {renderView()}
     </Layout>
   );
 }
 
-function App() {
+export default function App() {
   try {
     return (
-      <AuthProvider>
-        <DocumentProvider>
-          <AppContent />
-        </DocumentProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <DocumentProvider>
+            <AppContent />
+          </DocumentProvider>
+        </AuthProvider>
+      </ThemeProvider>
     );
   } catch (error) {
     console.error('App component error:', error);
@@ -105,5 +112,3 @@ function App() {
     );
   }
 }
-
-export default App;

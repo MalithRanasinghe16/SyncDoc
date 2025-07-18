@@ -342,4 +342,77 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// @route   DELETE /api/auth/delete-account
+// @desc    Delete user account and all associated data
+// @access  Private
+router.delete('/delete-account', async (req, res) => {
+  try {
+    // Get token from header
+    const authHeader = req.header('Authorization');
+    const token = authHeader && authHeader.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : null;
+
+    if (!token) {
+      return res.status(401).json({ 
+        message: 'No token provided' 
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Get user from database
+    const user = await User.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'User not found' 
+      });
+    }
+
+    // Import Document model to delete user's documents
+    const Document = (await import('../models/Document.js')).default;
+    const Version = (await import('../models/Version.js')).default;
+
+    // Delete all documents owned by the user
+    const userDocuments = await Document.find({ ownerId: user._id });
+    
+    // Delete all versions for user's documents
+    for (const doc of userDocuments) {
+      await Version.deleteMany({ documentId: doc._id });
+    }
+    
+    // Delete all documents owned by the user
+    await Document.deleteMany({ ownerId: user._id });
+    
+    // Remove user from collaborators list in other documents
+    await Document.updateMany(
+      { 'collaborators.user': user._id },
+      { $pull: { collaborators: { user: user._id } } }
+    );
+
+    // Delete the user account
+    await User.findByIdAndDelete(user._id);
+
+    res.json({
+      message: 'Account deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        message: 'Invalid or expired token' 
+      });
+    }
+    
+    res.status(500).json({
+      message: 'Server error during account deletion',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 export default router;

@@ -130,17 +130,6 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                   <div className="py-2">
                     <button
                       onClick={() => {
-                        onNavigate('settings');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Settings</span>
-                    </button>
-                    <hr className="my-2 border-gray-200 dark:border-gray-700" />
-                    <button
-                      onClick={() => {
                         handleLogout();
                         setShowUserMenu(false);
                       }}

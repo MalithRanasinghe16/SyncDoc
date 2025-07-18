@@ -18,15 +18,25 @@ interface VersionHistoryProps {
 export default function VersionHistory({ onBack }: VersionHistoryProps) {
   const { versions, restoreVersion, currentDocument } = useDocuments();
   const [selectedVersion, setSelectedVersion] = React.useState<Version | null>(null);
+  const [isRestoring, setIsRestoring] = React.useState(false);
 
-  const handleRestore = (versionId: string) => {
+  const handleRestore = async (versionId: string) => {
     if (confirm('Are you sure you want to restore this version? Current changes will be lost.')) {
-      restoreVersion(versionId);
-      onBack();
+      try {
+        setIsRestoring(true);
+        await restoreVersion(versionId);
+        onBack();
+      } catch (error) {
+        console.error('Failed to restore version:', error);
+        // You might want to show a toast notification here
+      } finally {
+        setIsRestoring(false);
+      }
     }
   };
 
-  const formatTimestamp = (date: Date) => {
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
@@ -68,11 +78,11 @@ export default function VersionHistory({ onBack }: VersionHistoryProps) {
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Versions</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{versions.length} versions available</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{versions?.length || 0} versions available</p>
               </div>
               
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {versions.length === 0 ? (
+                {!versions || versions.length === 0 ? (
                   <div className="p-6 text-center">
                     <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-600 dark:text-gray-400">No version history available</p>
@@ -118,10 +128,11 @@ export default function VersionHistory({ onBack }: VersionHistoryProps) {
                                   e.stopPropagation();
                                   handleRestore(version.id);
                                 }}
-                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm font-medium flex items-center space-x-1"
+                                disabled={isRestoring}
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm font-medium flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <RotateCcw className="w-3 h-3" />
-                                <span>Restore</span>
+                                <span>{isRestoring ? 'Restoring...' : 'Restore'}</span>
                               </button>
                             )}
                           </div>
@@ -153,10 +164,11 @@ export default function VersionHistory({ onBack }: VersionHistoryProps) {
                       <div className="flex items-center space-x-3">
                         <button
                           onClick={() => handleRestore(selectedVersion.id)}
-                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2"
+                          disabled={isRestoring}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <RotateCcw className="w-4 h-4" />
-                          <span>Restore This Version</span>
+                          <span>{isRestoring ? 'Restoring...' : 'Restore This Version'}</span>
                         </button>
                       </div>
                     </div>
