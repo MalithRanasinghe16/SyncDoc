@@ -1,18 +1,38 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FileText, Mail, Lock, Loader2 } from 'lucide-react';
+import { FileText, Mail, Lock, Loader2, User, AlertCircle } from 'lucide-react';
 
 export default function Login() {
-  const { login, loginWithGoogle, isLoading } = useAuth();
-  const [email, setEmail] = useState('alex@example.com');
-  const [password, setPassword] = useState('password');
+  const { login, loginWithGoogle, register, isLoading, error } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loginType, setLoginType] = useState<'email' | 'google' | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     setLoginType('email');
+    
     try {
-      await login(email, password);
+      if (isRegistering) {
+        if (password !== confirmPassword) {
+          setFormError('Passwords do not match');
+          return;
+        }
+        if (password.length < 6) {
+          setFormError('Password must be at least 6 characters');
+          return;
+        }
+        await register(name, email, password);
+      } else {
+        await login(email, password);
+      }
+    } catch (error) {
+      // Error is handled by AuthContext
     } finally {
       setLoginType(null);
     }
@@ -27,6 +47,8 @@ export default function Login() {
     }
   };
 
+  const currentError = formError || error;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -38,6 +60,36 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome to SyncDoc</h1>
           <p className="text-gray-600 dark:text-gray-400">Shared space. Shared thoughts.</p>
         </div>
+
+        {/* Login/Register form */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+          {currentError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <span className="text-red-700">{currentError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {isRegistering && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
         {/* Login form */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
@@ -78,6 +130,26 @@ export default function Login() {
               </div>
             </div>
 
+            {isRegistering && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Confirm your password"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -86,10 +158,19 @@ export default function Login() {
               {isLoading && loginType === 'email' ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                'Sign in with Email'
+                isRegistering ? 'Create Account' : 'Sign In'
               )}
             </button>
           </form>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          </div>
 
           <div className="mt-6">
             <div className="relative">

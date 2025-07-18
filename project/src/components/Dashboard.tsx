@@ -20,11 +20,16 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onOpenDocument }: DashboardProps) {
-  const { documents, createDocument, deleteDocument } = useDocuments();
+  const { 
+    documents, 
+    createDocument, 
+    deleteDocument
+  } = useDocuments();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'owned' | 'shared'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
 
@@ -38,31 +43,56 @@ export default function Dashboard({ onOpenDocument }: DashboardProps) {
     return matchesSearch && matchesFilter;
   });
 
-  const handleCreateDocument = () => {
+  const handleCreateDocument = async () => {
     if (newDocTitle.trim()) {
-      const newDoc = createDocument(newDocTitle.trim());
-      setNewDocTitle('');
-      setShowCreateModal(false);
-      onOpenDocument(newDoc);
+      setIsCreating(true);
+      try {
+        const newDoc = await createDocument(newDocTitle.trim());
+        setNewDocTitle('');
+        setShowCreateModal(false);
+        onOpenDocument(newDoc);
+      } catch (error) {
+        console.error('Failed to create document:', error);
+        // Error is already handled by DocumentContext
+      } finally {
+        setIsCreating(false);
+      }
     }
   };
 
-  const handleDeleteDocument = (docId: string, e: React.MouseEvent) => {
+  const handleDeleteDocument = async (docId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this document?')) {
-      deleteDocument(docId);
+      try {
+        await deleteDocument(docId);
+      } catch (error) {
+        console.error('Failed to delete document:', error);
+        // Error is already handled by DocumentContext
+      }
     }
   };
 
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-    return date.toLocaleDateString();
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      
+      const now = new Date();
+      const diff = now.getTime() - dateObj.getTime();
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (days === 0) return 'Today';
+      if (days === 1) return 'Yesterday';
+      if (days < 7) return `${days} days ago`;
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', date, error);
+      return 'Unknown date';
+    }
   };
 
   return (

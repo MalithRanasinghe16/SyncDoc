@@ -39,6 +39,34 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
-.env
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Test coverage
+coverage/
+*.lcov
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Debug files
+debug.log
+*.debug
+
+# Cache directories
+.cache/
+.parcel-cache/
+.vite/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
 

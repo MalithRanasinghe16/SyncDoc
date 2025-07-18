@@ -85,17 +85,25 @@ function AppContent() {
 }
 
 function App() {
-  return (
-    <GoogleOAuthProvider clientId={clientId}>
-      <ThemeProvider>
-        <AuthProvider>
-          <DocumentProvider>
-            <AppContent />
-          </DocumentProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </GoogleOAuthProvider>
-  );
+  try {
+    return (
+      <AuthProvider>
+        <DocumentProvider>
+          <AppContent />
+        </DocumentProvider>
+      </AuthProvider>
+    );
+  } catch (error) {
+    console.error('App component error:', error);
+    return (
+      <div className="min-h-screen bg-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Application Error</h1>
+          <p className="text-red-700">Please check the console for details</p>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;

@@ -4,7 +4,7 @@ export interface User {
   email: string;
   avatar: string;
   isOnline: boolean;
-  lastSeen: Date;
+  lastSeen: Date | string;
 }
 
 export interface Document {
@@ -13,8 +13,8 @@ export interface Document {
   content: string;
   ownerId: string;
   collaborators: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   isShared: boolean;
   shareLink?: string;
 }
@@ -23,7 +23,7 @@ export interface Version {
   id: string;
   documentId: string;
   content: string;
-  timestamp: Date;
+  timestamp: Date | string;
   authorId: string;
   authorName: string;
   changes: string;
