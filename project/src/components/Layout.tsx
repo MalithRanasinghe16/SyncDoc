@@ -119,27 +119,32 @@ export default function Layout({
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <img
-                  src={
-                    user?.avatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      user?.name || "U"
-                    )}&background=0D9488&color=fff`
-                  }
-                  alt={user?.name || "User"}
-                  className="w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-emerald-500 transition-colors"
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    console.log("Avatar load error:", e);
-                    const target = e.target as HTMLImageElement;
-                    if (!target.src.includes("ui-avatars.com")) {
-                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        user?.name || "U"
-                      )}&background=0D9488&color=fff`;
-                    }
-                  }}
-                />
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || "User"}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-emerald-500 transition-colors"
+                    referrerPolicy="no-referrer"
+                    onError={() => {
+                      console.log(
+                        "Avatar load error - falling back to initials"
+                      );
+                    }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center border-2 border-transparent hover:border-emerald-500 transition-colors">
+                    <span className="text-sm font-medium text-white">
+                      {user?.name
+                        ? user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .substring(0, 2)
+                        : "U"}
+                    </span>
+                  </div>
+                )}
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {user?.name}
