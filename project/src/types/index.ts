@@ -21,7 +21,7 @@ export interface Document {
     isPublic: boolean;
     allowComments: boolean;
     allowDownload: boolean;
-    defaultPermission: 'read' | 'write' | 'comment';
+    defaultPermission: "read" | "write" | "comment";
     permissionLinks?: {
       read?: string;
       comment?: string;
@@ -34,7 +34,7 @@ export interface ShareSettings {
   documentId: string;
   isPublic: boolean;
   shareUrl: string;
-  defaultPermission: 'read' | 'write' | 'comment';
+  defaultPermission: "read" | "write" | "comment";
   allowComments: boolean;
   allowDownload: boolean;
   expiresAt?: Date | string;

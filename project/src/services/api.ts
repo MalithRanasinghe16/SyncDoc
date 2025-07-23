@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
 // API Response types
 interface ApiResponse<T = any> {
@@ -30,17 +31,17 @@ class ApiService {
 
   // Get auth token from localStorage
   private getAuthToken(): string | null {
-    return localStorage.getItem('syncdoc_token');
+    return localStorage.getItem("syncdoc_token");
   }
 
   // Set auth token in localStorage
   private setAuthToken(token: string): void {
-    localStorage.setItem('syncdoc_token', token);
+    localStorage.setItem("syncdoc_token", token);
   }
 
   // Remove auth token from localStorage
   private removeAuthToken(): void {
-    localStorage.removeItem('syncdoc_token');
+    localStorage.removeItem("syncdoc_token");
   }
 
   // Generic API request method
@@ -52,7 +53,7 @@ class ApiService {
     const token = this.getAuthToken();
 
     const defaultHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
@@ -83,9 +84,13 @@ class ApiService {
   }
 
   // Authentication methods
-  async register(name: string, email: string, password: string): Promise<LoginResponse> {
-    const response = await this.request<LoginResponse>('/auth/register', {
-      method: 'POST',
+  async register(
+    name: string,
+    email: string,
+    password: string
+  ): Promise<LoginResponse> {
+    const response = await this.request<LoginResponse>("/auth/register", {
+      method: "POST",
       body: JSON.stringify({ name, email, password }),
     });
 
@@ -97,8 +102,8 @@ class ApiService {
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await this.request<LoginResponse>('/auth/login', {
-      method: 'POST',
+    const response = await this.request<LoginResponse>("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
 
@@ -110,8 +115,8 @@ class ApiService {
   }
 
   async loginWithGoogle(access_token: string): Promise<LoginResponse> {
-    const response = await this.request<LoginResponse>('/auth/google', {
-      method: 'POST',
+    const response = await this.request<LoginResponse>("/auth/google", {
+      method: "POST",
       body: JSON.stringify({ access_token }),
     });
 
@@ -124,8 +129,8 @@ class ApiService {
 
   async logout(): Promise<void> {
     try {
-      await this.request('/auth/logout', {
-        method: 'POST',
+      await this.request("/auth/logout", {
+        method: "POST",
       });
     } finally {
       this.removeAuthToken();
@@ -133,13 +138,13 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<{ user: User }> {
-    return this.request('/auth/me');
+    return this.request("/auth/me");
   }
 
   async deleteAccount(): Promise<void> {
     try {
-      await this.request('/auth/delete-account', {
-        method: 'DELETE',
+      await this.request("/auth/delete-account", {
+        method: "DELETE",
       });
     } finally {
       this.removeAuthToken();
@@ -155,7 +160,7 @@ class ApiService {
     status?: string;
   }): Promise<any> {
     const searchParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -164,7 +169,9 @@ class ApiService {
       });
     }
 
-    const endpoint = `/documents${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const endpoint = `/documents${
+      searchParams.toString() ? `?${searchParams.toString()}` : ""
+    }`;
     return this.request(endpoint);
   }
 
@@ -177,37 +184,43 @@ class ApiService {
     content?: string;
     folder?: string;
   }): Promise<any> {
-    return this.request('/documents', {
-      method: 'POST',
+    return this.request("/documents", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateDocument(id: string, data: {
-    title?: string;
-    content?: string;
-    status?: string;
-    folder?: string;
-    tags?: string[];
-  }): Promise<any> {
+  async updateDocument(
+    id: string,
+    data: {
+      title?: string;
+      content?: string;
+      status?: string;
+      folder?: string;
+      tags?: string[];
+    }
+  ): Promise<any> {
     return this.request(`/documents/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async deleteDocument(id: string): Promise<any> {
     return this.request(`/documents/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
-  async getDocumentVersions(id: string, params?: {
-    page?: number;
-    limit?: number;
-  }): Promise<any> {
+  async getDocumentVersions(
+    id: string,
+    params?: {
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<any> {
     const searchParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
@@ -216,31 +229,36 @@ class ApiService {
       });
     }
 
-    const endpoint = `/documents/${id}/versions${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const endpoint = `/documents/${id}/versions${
+      searchParams.toString() ? `?${searchParams.toString()}` : ""
+    }`;
     return this.request(endpoint);
   }
 
   async saveDocumentVersion(id: string, changes?: string): Promise<any> {
     return this.request(`/documents/${id}/versions`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ changes }),
     });
   }
 
   // Document sharing methods
-  async generateShareLink(documentId: string, settings: {
-    isPublic?: boolean;
-    defaultPermission: 'read' | 'write' | 'comment';
-    allowComments?: boolean;
-    allowDownload?: boolean;
-    expiresAt?: string;
-  }): Promise<any> {
+  async generateShareLink(
+    documentId: string,
+    settings: {
+      isPublic?: boolean;
+      defaultPermission: "read" | "write" | "comment";
+      allowComments?: boolean;
+      allowDownload?: boolean;
+      expiresAt?: string;
+    }
+  ): Promise<any> {
     const shareSettings = {
       isPublic: true,
       ...settings,
     };
     return this.request(`/documents/${documentId}/share`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(shareSettings),
     });
   }
@@ -249,27 +267,30 @@ class ApiService {
     return this.request(`/documents/shared/${shareToken}`);
   }
 
-  async updateShareSettings(documentId: string, settings: {
-    defaultPermission?: 'read' | 'write' | 'comment';
-    allowComments?: boolean;
-    allowDownload?: boolean;
-    isPublic?: boolean;
-  }): Promise<any> {
+  async updateShareSettings(
+    documentId: string,
+    settings: {
+      defaultPermission?: "read" | "write" | "comment";
+      allowComments?: boolean;
+      allowDownload?: boolean;
+      isPublic?: boolean;
+    }
+  ): Promise<any> {
     return this.request(`/documents/${documentId}/share`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(settings),
     });
   }
 
   async revokeShareLink(documentId: string): Promise<any> {
     return this.request(`/documents/${documentId}/share`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
   // User methods
   async getUserProfile(): Promise<any> {
-    return this.request('/users/profile');
+    return this.request("/users/profile");
   }
 
   async updateUserProfile(data: {
@@ -277,37 +298,39 @@ class ApiService {
     avatar?: string;
     preferences?: any;
   }): Promise<any> {
-    return this.request('/users/profile', {
-      method: 'PUT',
+    return this.request("/users/profile", {
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
 
   async searchUsers(query: string, limit?: number): Promise<any> {
     const searchParams = new URLSearchParams({ q: query });
-    if (limit) searchParams.append('limit', limit.toString());
-    
+    if (limit) searchParams.append("limit", limit.toString());
+
     return this.request(`/users/search?${searchParams.toString()}`);
   }
 
   async getOnlineUsers(limit?: number): Promise<any> {
     const searchParams = new URLSearchParams();
-    if (limit) searchParams.append('limit', limit.toString());
-    
-    const endpoint = `/users/online${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    if (limit) searchParams.append("limit", limit.toString());
+
+    const endpoint = `/users/online${
+      searchParams.toString() ? `?${searchParams.toString()}` : ""
+    }`;
     return this.request(endpoint);
   }
 
   async updateUserStatus(isOnline: boolean): Promise<any> {
-    return this.request('/users/status', {
-      method: 'POST',
+    return this.request("/users/status", {
+      method: "POST",
       body: JSON.stringify({ isOnline }),
     });
   }
 
   // Health check
   async healthCheck(): Promise<any> {
-    return this.request('/health');
+    return this.request("/health");
   }
 }
 

@@ -54,11 +54,13 @@ export default function Editor({
   const { updateDocument, saveVersion } = useDocuments();
 
   // Determine if editing is allowed
-  const canEdit = !isSharedView || (document.shareSettings?.defaultPermission === 'write');
-  const canComment = !isSharedView || 
-    (document.shareSettings?.defaultPermission === 'comment' || 
-     document.shareSettings?.defaultPermission === 'write' ||
-     document.shareSettings?.allowComments);
+  const canEdit =
+    !isSharedView || document.shareSettings?.defaultPermission === "write";
+  const canComment =
+    !isSharedView ||
+    document.shareSettings?.defaultPermission === "comment" ||
+    document.shareSettings?.defaultPermission === "write" ||
+    document.shareSettings?.allowComments;
 
   // Helper function to format dates (same as in Dashboard)
   const formatDate = (date: Date | string) => {
@@ -105,9 +107,9 @@ export default function Editor({
     comment?: string;
     write?: string;
   }>({});
-  const [sharePermission, setSharePermission] = useState<'read' | 'write' | 'comment'>(
-    document.shareSettings?.defaultPermission || 'read'
-  );
+  const [sharePermission, setSharePermission] = useState<
+    "read" | "write" | "comment"
+  >(document.shareSettings?.defaultPermission || "read");
   const [allowComments, setAllowComments] = useState(
     document.shareSettings?.allowComments ?? true
   );
@@ -825,39 +827,41 @@ export default function Editor({
   // Share functions
   const handleGenerateAllLinks = async () => {
     setIsGeneratingLink(true);
-    
+
     try {
       const settings = {
         allowComments,
         allowDownload,
       };
-      
+
       // Generate all three permission links
-      const permissions = ['read', 'comment', 'write'] as const;
+      const permissions = ["read", "comment", "write"] as const;
       const newUrls: { read?: string; comment?: string; write?: string } = {};
-      
+
       for (const permission of permissions) {
         const response = await apiService.generateShareLink(document.id, {
           ...settings,
-          defaultPermission: permission
+          defaultPermission: permission,
         });
         newUrls[permission] = response.shareUrl;
       }
-      
+
       setShareUrls(newUrls);
     } catch (error) {
-      console.error('Failed to generate share links:', error);
+      console.error("Failed to generate share links:", error);
     } finally {
       setIsGeneratingLink(false);
     }
   };
 
-  const handleCopySpecificLink = async (permission: 'read' | 'comment' | 'write') => {
+  const handleCopySpecificLink = async (
+    permission: "read" | "comment" | "write"
+  ) => {
     // If links don't exist, generate them first
     if (!shareUrls.read && !shareUrls.comment && !shareUrls.write) {
       await handleGenerateAllLinks();
     }
-    
+
     // Wait a moment for state to update, then copy the specific link
     setTimeout(async () => {
       const currentUrl = shareUrls[permission];
@@ -867,69 +871,81 @@ export default function Editor({
           setLinkCopied(permission);
           setTimeout(() => setLinkCopied(false), 2000);
         } catch (error) {
-          console.error('Failed to copy link:', error);
+          console.error("Failed to copy link:", error);
         }
       }
     }, 100);
   };
 
   const handleCopyCurrentPermissionLink = async () => {
-    console.log('Copy button clicked, current permission:', sharePermission);
-    console.log('Current shareUrls:', shareUrls);
-    
+    console.log("Copy button clicked, current permission:", sharePermission);
+    console.log("Current shareUrls:", shareUrls);
+
     // Check if link already exists for this permission
     if (shareUrls[sharePermission]) {
       // Link exists, just copy it
-      console.log('Link already exists, copying:', shareUrls[sharePermission]);
+      console.log("Link already exists, copying:", shareUrls[sharePermission]);
       try {
         await navigator.clipboard.writeText(shareUrls[sharePermission]!);
         setLinkCopied(sharePermission);
         setTimeout(() => setLinkCopied(false), 2000);
-        console.log('Existing link copied successfully');
+        console.log("Existing link copied successfully");
       } catch (error) {
-        console.error('Failed to copy existing link:', error);
+        console.error("Failed to copy existing link:", error);
       }
       return;
     }
-    
+
     // No link exists for this permission, generate it
     console.log(`No link exists for ${sharePermission}, generating...`);
     setIsGeneratingLink(true);
-    
+
     try {
       const settings = {
         allowComments,
         allowDownload,
-        defaultPermission: sharePermission
+        defaultPermission: sharePermission,
       };
-      
-      console.log(`Calling API to generate ${sharePermission} link with settings:`, settings);
-      
-      const response = await apiService.generateShareLink(document.id, settings);
+
+      console.log(
+        `Calling API to generate ${sharePermission} link with settings:`,
+        settings
+      );
+
+      const response = await apiService.generateShareLink(
+        document.id,
+        settings
+      );
       console.log(`Generated ${sharePermission} link response:`, response);
       console.log(`Full response object:`, JSON.stringify(response, null, 2));
       console.log(`Response.shareUrl:`, response.shareUrl);
       console.log(`Response keys:`, Object.keys(response));
-      
+
       if (response.shareUrl) {
-        console.log(`Using shareUrl for ${sharePermission}:`, response.shareUrl);
-        
+        console.log(
+          `Using shareUrl for ${sharePermission}:`,
+          response.shareUrl
+        );
+
         // Update the state with the new link
-        setShareUrls(prev => ({
+        setShareUrls((prev) => ({
           ...prev,
-          [sharePermission]: response.shareUrl
+          [sharePermission]: response.shareUrl,
         }));
-        
+
         // Copy the link to clipboard
         await navigator.clipboard.writeText(response.shareUrl);
         setLinkCopied(sharePermission);
         setTimeout(() => setLinkCopied(false), 2000);
-        console.log('Link generated and copied successfully');
+        console.log("Link generated and copied successfully");
       } else {
-        console.error(`No shareUrl found in response for ${sharePermission}:`, response);
+        console.error(
+          `No shareUrl found in response for ${sharePermission}:`,
+          response
+        );
       }
     } catch (error) {
-      console.error('Failed to generate and copy share link:', error);
+      console.error("Failed to generate and copy share link:", error);
     } finally {
       setIsGeneratingLink(false);
     }
@@ -952,15 +968,15 @@ export default function Editor({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownOpen && showShareModal) {
         const target = event.target as Element;
-        if (!target.closest('.dropdown-container')) {
+        if (!target.closest(".dropdown-container")) {
           setDropdownOpen(false);
         }
       }
     };
 
-    window.document.addEventListener('mousedown', handleClickOutside);
+    window.document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      window.document.removeEventListener('mousedown', handleClickOutside);
+      window.document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen, showShareModal]);
 
@@ -1062,7 +1078,7 @@ export default function Editor({
                 )}
 
                 {!isSharedView && (
-                  <button 
+                  <button
                     onClick={() => setShowShareModal(true)}
                     className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2"
                   >
@@ -1426,7 +1442,9 @@ export default function Editor({
                   isFocusMode
                     ? "min-h-screen border-none focus:ring-0 shadow-none bg-white dark:bg-gray-900"
                     : "border border-gray-200 dark:border-gray-700 focus:border-blue-300 dark:focus:border-blue-500 bg-white dark:bg-gray-900"
-                } ${!canEdit ? "cursor-default" : ""} outline-none text-gray-900 dark:text-gray-100 leading-relaxed prose prose-lg dark:prose-invert max-w-none rounded-lg p-6 transition-colors`}
+                } ${
+                  !canEdit ? "cursor-default" : ""
+                } outline-none text-gray-900 dark:text-gray-100 leading-relaxed prose prose-lg dark:prose-invert max-w-none rounded-lg p-6 transition-colors`}
                 style={{
                   fontSize: isFocusMode ? "18px" : "16px",
                   lineHeight: "1.75",
@@ -1493,8 +1511,10 @@ export default function Editor({
             <div className="space-y-4">
               {/* Permission Level Dropdown and Copy Link */}
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">General access</h4>
-                
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  General access
+                </h4>
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center space-x-3 flex-1">
                     <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center shadow-sm">
@@ -1503,56 +1523,71 @@ export default function Editor({
                     <div className="flex-1 min-w-0 relative dropdown-container">
                       <div className="cursor-default">
                         <div className="text-gray-900 dark:text-white font-semibold text-sm">
-                          {sharePermission === 'read' && 'Viewer'}
-                          {sharePermission === 'comment' && 'Commenter'}
-                          {sharePermission === 'write' && 'Editor'}
+                          {sharePermission === "read" && "Viewer"}
+                          {sharePermission === "comment" && "Commenter"}
+                          {sharePermission === "write" && "Editor"}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                          {sharePermission === 'read' && 'Anyone on the internet with the link can view'}
-                          {sharePermission === 'comment' && 'Anyone on the internet with the link can comment'}
-                          {sharePermission === 'write' && 'Anyone on the internet with the link can edit'}
+                          {sharePermission === "read" &&
+                            "Anyone on the internet with the link can view"}
+                          {sharePermission === "comment" &&
+                            "Anyone on the internet with the link can comment"}
+                          {sharePermission === "write" &&
+                            "Anyone on the internet with the link can edit"}
                         </p>
                       </div>
-                      
+
                       {/* Custom Dropdown */}
                       {dropdownOpen && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50">
                           <div className="py-1">
                             <button
                               onClick={() => {
-                                setSharePermission('read');
+                                setSharePermission("read");
                                 setDropdownOpen(false);
                               }}
                               className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                                sharePermission === 'read' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                                sharePermission === "read"
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                  : "text-gray-900 dark:text-white"
                               }`}
                             >
                               <div className="font-medium">Viewer</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Can view the document</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Can view the document
+                              </div>
                             </button>
                             <button
                               onClick={() => {
-                                setSharePermission('comment');
+                                setSharePermission("comment");
                                 setDropdownOpen(false);
                               }}
                               className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                                sharePermission === 'comment' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                                sharePermission === "comment"
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                  : "text-gray-900 dark:text-white"
                               }`}
                             >
                               <div className="font-medium">Commenter</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Can view and comment</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Can view and comment
+                              </div>
                             </button>
                             <button
                               onClick={() => {
-                                setSharePermission('write');
+                                setSharePermission("write");
                                 setDropdownOpen(false);
                               }}
                               className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                                sharePermission === 'write' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                                sharePermission === "write"
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                  : "text-gray-900 dark:text-white"
                               }`}
                             >
                               <div className="font-medium">Editor</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Can view, comment, and edit</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Can view, comment, and edit
+                              </div>
                             </button>
                           </div>
                         </div>
@@ -1561,16 +1596,18 @@ export default function Editor({
                     <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
                       className={`ml-2 w-6 h-6 rounded-full ${
-                        dropdownOpen 
-                          ? 'bg-blue-100 dark:bg-blue-900/30' 
-                          : 'bg-gray-200 dark:bg-gray-600'
+                        dropdownOpen
+                          ? "bg-blue-100 dark:bg-blue-900/30"
+                          : "bg-gray-200 dark:bg-gray-600"
                       } hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center transition-colors cursor-pointer`}
                     >
-                      <ChevronDown className={`w-3 h-3 ${
-                        dropdownOpen 
-                          ? 'text-blue-600 dark:text-blue-400 transform rotate-180' 
-                          : 'text-gray-600 dark:text-gray-300'
-                      } transition-transform`} />
+                      <ChevronDown
+                        className={`w-3 h-3 ${
+                          dropdownOpen
+                            ? "text-blue-600 dark:text-blue-400 transform rotate-180"
+                            : "text-gray-600 dark:text-gray-300"
+                        } transition-transform`}
+                      />
                     </button>
                   </div>
                 </div>
@@ -1579,32 +1616,40 @@ export default function Editor({
               {/* Additional Settings */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Allow comments</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Allow comments
+                  </span>
                   <button
                     onClick={() => setAllowComments(!allowComments)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                      allowComments ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                      allowComments
+                        ? "bg-blue-600"
+                        : "bg-gray-200 dark:bg-gray-600"
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                        allowComments ? 'translate-x-6' : 'translate-x-1'
+                        allowComments ? "translate-x-6" : "translate-x-1"
                       }`}
                     />
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Allow download</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Allow download
+                  </span>
                   <button
                     onClick={() => setAllowDownload(!allowDownload)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                      allowDownload ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                      allowDownload
+                        ? "bg-blue-600"
+                        : "bg-gray-200 dark:bg-gray-600"
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                        allowDownload ? 'translate-x-6' : 'translate-x-1'
+                        allowDownload ? "translate-x-6" : "translate-x-1"
                       }`}
                     />
                   </button>
@@ -1650,7 +1695,8 @@ export default function Editor({
                 <div className="flex items-start space-x-2">
                   <Users className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div className="text-sm text-blue-800 dark:text-blue-200">
-                    Anyone with this link will be able to access the document with the selected permissions.
+                    Anyone with this link will be able to access the document
+                    with the selected permissions.
                   </div>
                 </div>
               </div>
