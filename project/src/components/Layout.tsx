@@ -1,25 +1,29 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { 
-  FileText, 
-  Settings, 
-  LogOut, 
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import {
+  FileText,
+  Settings,
+  LogOut,
   Bell,
   Search,
   Moon,
   Sun,
   Monitor,
-  ChevronDown
-} from 'lucide-react';
+  ChevronDown,
+} from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentPage: 'dashboard' | 'editor' | 'settings';
-  onNavigate: (page: 'dashboard' | 'editor' | 'settings') => void;
+  currentPage: "dashboard" | "editor" | "settings";
+  onNavigate: (page: "dashboard" | "editor" | "settings") => void;
 }
 
-export default function Layout({ children, currentPage, onNavigate }: LayoutProps) {
+export default function Layout({
+  children,
+  currentPage,
+  onNavigate,
+}: LayoutProps) {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -31,7 +35,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
   const themeIcons = {
     light: Sun,
     dark: Moon,
-    system: Monitor
+    system: Monitor,
   };
 
   const ThemeIcon = themeIcons[theme];
@@ -46,26 +50,28 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
                 <FileText className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">SyncDoc</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                SyncDoc
+              </h1>
             </div>
-            
+
             <nav className="hidden md:flex items-center space-x-2">
               <button
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => onNavigate("dashboard")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  currentPage === 'dashboard'
-                    ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  currentPage === "dashboard"
+                    ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
                 Documents
               </button>
               <button
-                onClick={() => onNavigate('settings')}
+                onClick={() => onNavigate("settings")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  currentPage === 'settings'
-                    ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  currentPage === "settings"
+                    ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
                 Settings
@@ -90,12 +96,12 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
             <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
               <Bell className="w-5 h-5" />
             </button>
-            
+
             {/* Theme Toggle */}
             <div className="relative">
               <button
                 onClick={() => {
-                  const themes = ['light', 'dark', 'system'] as const;
+                  const themes = ["light", "dark", "system"] as const;
                   const currentIndex = themes.indexOf(theme);
                   const nextIndex = (currentIndex + 1) % themes.length;
                   setTheme(themes[nextIndex]);
@@ -106,7 +112,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                 <ThemeIcon className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* User Dropdown */}
             <div className="relative">
               <button
@@ -114,17 +120,37 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <img
-                  src={user?.avatar}
-                  alt={user?.name}
-                  className="w-8 h-8 rounded-full"
+                  src={
+                    user?.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      user?.name || "U"
+                    )}&background=0D9488&color=fff`
+                  }
+                  alt={user?.name || "User"}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-transparent hover:border-emerald-500 transition-colors"
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    console.log("Avatar load error:", e);
+                    const target = e.target as HTMLImageElement;
+                    if (!target.src.includes("ui-avatars.com")) {
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user?.name || "U"
+                      )}&background=0D9488&color=fff`;
+                    }
+                  }}
                 />
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {user?.email}
+                  </p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               </button>
-              
+
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                   <div className="py-2">
@@ -147,9 +173,7 @@ export default function Layout({ children, currentPage, onNavigate }: LayoutProp
       </header>
 
       {/* Main content */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

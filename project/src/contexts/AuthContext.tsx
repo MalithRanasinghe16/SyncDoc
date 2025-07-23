@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types';
-import apiService from '../services/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { User } from "../types";
+import apiService from "../services/api";
 
 // Extend Window interface for Google OAuth
 declare global {
@@ -11,7 +11,10 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
+            callback: (response: {
+              access_token?: string;
+              error?: string;
+            }) => void;
           }) => {
             requestAccessToken: () => void;
           };
@@ -40,27 +43,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // Helper function to ensure user object has all required properties
-  const normalizeUser = (apiUser: any): User => ({
-    id: apiUser.id,
-    name: apiUser.name,
-    email: apiUser.email,
-    avatar: apiUser.avatar || '',
-    isOnline: apiUser.isOnline ?? true,
-    lastSeen: apiUser.lastSeen || new Date(),
-  });
+  const normalizeUser = (apiUser: any): User => {
+    // Log the incoming user data
+    console.log("Normalizing user data:", apiUser);
+
+    const normalizedUser = {
+      id: apiUser.id,
+      name: apiUser.name,
+      email: apiUser.email,
+      avatar: apiUser.avatar || null, // Use null instead of empty string for missing avatar
+      isOnline: apiUser.isOnline ?? true,
+      lastSeen: apiUser.lastSeen || new Date(),
+    };
+
+    // Log the normalized user data
+    console.log("Normalized user data:", normalizedUser);
+
+    return normalizedUser;
+  };
 
   useEffect(() => {
     // Check for stored token and get current user
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('syncdoc_token');
+        const token = localStorage.getItem("syncdoc_token");
         if (token) {
           const response = await apiService.getCurrentUser();
           setUser(normalizeUser(response.user));
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('syncdoc_token');
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("syncdoc_token");
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -77,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await apiService.register(name, email, password);
       setUser(normalizeUser(response.user));
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Registration failed');
+      setError(error instanceof Error ? error.message : "Registration failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -91,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await apiService.login(email, password);
       setUser(normalizeUser(response.user));
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
+      setError(error instanceof Error ? error.message : "Login failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -103,31 +116,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       // Use Google Identity Services
-      if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
+      if (typeof window !== "undefined" && window.google?.accounts?.oauth2) {
         return new Promise<void>((resolve, reject) => {
-          window.google!.accounts.oauth2.initTokenClient({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            scope: 'openid email profile',
-            callback: async (response: any) => {
-              try {
-                if (response.access_token) {
-                  const apiResponse = await apiService.loginWithGoogle(response.access_token);
-                  setUser(normalizeUser(apiResponse.user));
-                  resolve();
-                } else {
-                  reject(new Error('No access token received from Google'));
+          window
+            .google!.accounts.oauth2.initTokenClient({
+              client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+              scope: "openid email profile",
+              callback: async (response: any) => {
+                try {
+                  if (response.access_token) {
+                    console.log(
+                      "Got Google access token:",
+                      response.access_token.substring(0, 10) + "..."
+                    );
+                    const apiResponse = await apiService.loginWithGoogle(
+                      response.access_token
+                    );
+                    console.log("Google login response:", apiResponse);
+                    const normalizedUser = normalizeUser(apiResponse.user);
+                    console.log("Normalized user:", normalizedUser);
+                    setUser(normalizedUser);
+                    resolve();
+                  } else {
+                    reject(new Error("No access token received from Google"));
+                  }
+                } catch (error) {
+                  console.error("Google login error:", error);
+                  reject(error);
                 }
-              } catch (error) {
-                reject(error);
-              }
-            },
-          }).requestAccessToken();
+              },
+            })
+            .requestAccessToken();
         });
       } else {
-        throw new Error('Google OAuth not loaded. Please refresh the page.');
+        throw new Error("Google OAuth not loaded. Please refresh the page.");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Google login failed');
+      setError(error instanceof Error ? error.message : "Google login failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -139,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await apiService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       setUser(null);
       setIsLoading(false);
@@ -153,7 +178,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await apiService.deleteAccount();
       setUser(null);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Account deletion failed');
+      setError(
+        error instanceof Error ? error.message : "Account deletion failed"
+      );
       throw error;
     } finally {
       setIsLoading(false);
@@ -161,16 +188,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      loginWithGoogle, 
-      register, 
-      logout, 
-      deleteAccount,
-      isLoading, 
-      error 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        loginWithGoogle,
+        register,
+        logout,
+        deleteAccount,
+        isLoading,
+        error,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -179,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
