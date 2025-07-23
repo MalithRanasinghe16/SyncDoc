@@ -178,31 +178,14 @@ router.post(
 
       let googleResponse;
       try {
-        // First get user info
         googleResponse = await fetchWithTimeout(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
+          "https://www.googleapis.com/oauth2/v2/userinfo",
           {
             headers: {
               Authorization: `Bearer ${access_token}`,
             },
           }
         );
-
-        // If successful, get high-res profile picture
-        if (googleResponse.ok) {
-          const userInfo = await googleResponse.json();
-          // Get high quality profile picture by removing /s96-c/ from the URL
-          const highResAvatar = userInfo.picture
-            ? userInfo.picture.replace("/s96-c/", "/s400-c/")
-            : null;
-          return {
-            ok: true,
-            json: async () => ({
-              ...userInfo,
-              picture: highResAvatar,
-            }),
-          };
-        }
       } catch (error) {
         if (error.message === "Request timed out") {
           return res.status(504).json({
@@ -223,7 +206,8 @@ router.post(
       }
 
       const googleUser = await googleResponse.json();
-      const { sub: googleId, email, name, picture: avatar } = googleUser;
+      console.log("Google user response:", googleUser); // Debug log
+      const { id: googleId, email, name, picture: avatar } = googleUser;
 
       // Check if user exists with Google ID
       let user = await User.findOne({ googleId });

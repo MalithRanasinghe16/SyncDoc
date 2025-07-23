@@ -17,9 +17,15 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [currentDocument, setCurrentDocument] = useState<Document | null>(null);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("App state changed:", { user: !!user, isLoading });
+  }, [user, isLoading]);
+
   // Reset to dashboard whenever user changes (login/logout/different user)
   useEffect(() => {
     if (user) {
+      console.log("User logged in, setting view to dashboard");
       setCurrentView('dashboard');
       setCurrentDocument(null);
     }

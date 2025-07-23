@@ -58,23 +58,25 @@ export default function Layout({
             <nav className="hidden md:flex items-center space-x-2">
               <button
                 onClick={() => onNavigate("dashboard")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                   currentPage === "dashboard"
                     ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
                     : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                Documents
+                <FileText className="w-4 h-4" />
+                <span>Documents</span>
               </button>
               <button
                 onClick={() => onNavigate("settings")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                   currentPage === "settings"
                     ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20"
                     : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                Settings
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
               </button>
             </nav>
           </div>

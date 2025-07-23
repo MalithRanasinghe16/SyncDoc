@@ -42,6 +42,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Safety timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log("Safety timeout: forcing loading to false");
+      setIsLoading(false);
+    }, 10000); // 10 seconds timeout
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   // Helper function to ensure user object has all required properties
   const normalizeUser = (apiUser: any): User => {
     // Log the incoming user data
@@ -65,17 +75,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for stored token and get current user
     const checkAuth = async () => {
+      console.log("Starting auth check...");
       try {
         const token = localStorage.getItem("syncdoc_token");
+        console.log("Token found:", token ? "Yes" : "No");
+        
         if (token) {
-          const response = await apiService.getCurrentUser();
+          console.log("Validating token with backend...");
+          
+          // Add timeout to prevent hanging
+          const response = await Promise.race([
+            apiService.getCurrentUser(),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error("Auth check timeout")), 5000)
+            )
+          ]);
+          
+          console.log("User data received:", response.user);
           setUser(normalizeUser(response.user));
+          console.log("User state set successfully");
+        } else {
+          console.log("No token found, user not authenticated");
+          setUser(null);
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         localStorage.removeItem("syncdoc_token");
         setUser(null);
       } finally {
+        console.log("Auth check completed, setting loading to false");
         setIsLoading(false);
       }
     };
@@ -117,25 +145,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Use Google Identity Services
       if (typeof window !== "undefined" && window.google?.accounts?.oauth2) {
-        return new Promise<void>((resolve, reject) => {
-          window
-            .google!.accounts.oauth2.initTokenClient({
+        // Add timeout to prevent hanging
+        await Promise.race([
+          new Promise<void>((resolve, reject) => {
+            console.log("Initiating Google OAuth...");
+            const tokenClient = window.google!.accounts.oauth2.initTokenClient({
               client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
               scope: "openid email profile",
               callback: async (response: any) => {
                 try {
+                  if (response.error) {
+                    console.error("Google OAuth error:", response.error, response.error_description);
+                    reject(new Error(`Google OAuth error: ${response.error_description || response.error}`));
+                    return;
+                  }
+                  
                   if (response.access_token) {
                     console.log(
                       "Got Google access token:",
                       response.access_token.substring(0, 10) + "..."
                     );
+                    console.log("Calling backend with Google token...");
                     const apiResponse = await apiService.loginWithGoogle(
                       response.access_token
                     );
-                    console.log("Google login response:", apiResponse);
+                    console.log("Backend response:", apiResponse);
+                    
+                    if (apiResponse.token) {
+                      console.log("JWT token received, storing in localStorage...");
+                      localStorage.setItem("syncdoc_token", apiResponse.token);
+                    }
+                    
                     const normalizedUser = normalizeUser(apiResponse.user);
-                    console.log("Normalized user:", normalizedUser);
+                    console.log("Setting user state:", normalizedUser);
                     setUser(normalizedUser);
+                    console.log("Google login completed successfully");
                     resolve();
                   } else {
                     reject(new Error("No access token received from Google"));
@@ -144,14 +188,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   console.error("Google login error:", error);
                   reject(error);
                 }
-              },
-            })
-            .requestAccessToken();
-        });
+              }
+            });
+            
+            console.log("Requesting access token...");
+            tokenClient.requestAccessToken();
+          }),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("Google login timeout after 60 seconds")), 60000);
+          })
+        ]);
       } else {
         throw new Error("Google OAuth not loaded. Please refresh the page.");
       }
     } catch (error) {
+      console.error("loginWithGoogle error:", error);
       setError(error instanceof Error ? error.message : "Google login failed");
       throw error;
     } finally {
