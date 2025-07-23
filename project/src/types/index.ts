@@ -17,6 +17,27 @@ export interface Document {
   updatedAt: Date | string;
   isShared: boolean;
   shareLink?: string;
+  shareSettings?: {
+    isPublic: boolean;
+    allowComments: boolean;
+    allowDownload: boolean;
+    defaultPermission: 'read' | 'write' | 'comment';
+    permissionLinks?: {
+      read?: string;
+      comment?: string;
+      write?: string;
+    };
+  };
+}
+
+export interface ShareSettings {
+  documentId: string;
+  isPublic: boolean;
+  shareUrl: string;
+  defaultPermission: 'read' | 'write' | 'comment';
+  allowComments: boolean;
+  allowDownload: boolean;
+  expiresAt?: Date | string;
 }
 
 export interface Version {

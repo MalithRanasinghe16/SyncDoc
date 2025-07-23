@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FileText, Mail, Lock, Loader2, User, AlertCircle } from 'lucide-react';
+import { FileText, Mail, Lock, Loader2, User, AlertCircle, Share2 } from 'lucide-react';
 
-export default function Login() {
+interface LoginProps {
+  sharedDocumentPending?: boolean;
+}
+
+export default function Login({ sharedDocumentPending = false }: LoginProps) {
   const { login, loginWithGoogle, register, isLoading, error } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
@@ -63,6 +67,21 @@ export default function Login() {
 
         {/* Login form */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
+          {/* Shared document notification */}
+          {sharedDocumentPending && (
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center space-x-3">
+              <Share2 className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="text-blue-700 dark:text-blue-300 text-sm font-medium">
+                  Document Access Required
+                </p>
+                <p className="text-blue-600 dark:text-blue-400 text-xs">
+                  Please sign in to access the shared document
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Error display */}
           {currentError && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3">

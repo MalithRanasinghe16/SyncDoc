@@ -227,6 +227,46 @@ class ApiService {
     });
   }
 
+  // Document sharing methods
+  async generateShareLink(documentId: string, settings: {
+    isPublic?: boolean;
+    defaultPermission: 'read' | 'write' | 'comment';
+    allowComments?: boolean;
+    allowDownload?: boolean;
+    expiresAt?: string;
+  }): Promise<any> {
+    const shareSettings = {
+      isPublic: true,
+      ...settings,
+    };
+    return this.request(`/documents/${documentId}/share`, {
+      method: 'POST',
+      body: JSON.stringify(shareSettings),
+    });
+  }
+
+  async getDocumentByShareToken(shareToken: string): Promise<any> {
+    return this.request(`/documents/shared/${shareToken}`);
+  }
+
+  async updateShareSettings(documentId: string, settings: {
+    defaultPermission?: 'read' | 'write' | 'comment';
+    allowComments?: boolean;
+    allowDownload?: boolean;
+    isPublic?: boolean;
+  }): Promise<any> {
+    return this.request(`/documents/${documentId}/share`, {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  async revokeShareLink(documentId: string): Promise<any> {
+    return this.request(`/documents/${documentId}/share`, {
+      method: 'DELETE',
+    });
+  }
+
   // User methods
   async getUserProfile(): Promise<any> {
     return this.request('/users/profile');

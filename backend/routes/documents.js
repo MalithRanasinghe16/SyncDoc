@@ -440,4 +440,273 @@ router.post('/:id/versions', [
   }
 });
 
+// @route   POST /api/documents/:id/share
+// @desc    Generate a shareable link for a document
+// @access  Private
+router.post('/:id/share', [
+  body('isPublic').isBoolean().withMessage('isPublic must be a boolean'),
+  body('defaultPermission').isIn(['read', 'write', 'comment']).withMessage('Invalid permission level'),
+  body('allowComments').isBoolean().withMessage('allowComments must be a boolean'),
+  body('allowDownload').isBoolean().withMessage('allowDownload must be a boolean'),
+  body('expiresAt').optional().isISO8601().withMessage('expiresAt must be a valid date')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Check if user is owner or has write permission
+    if (document.ownerId.toString() !== req.user._id.toString() && 
+        !document.collaborators.some(collab => 
+          collab.user.toString() === req.user._id.toString() && 
+          collab.permission === 'write'
+        )) {
+      return res.status(403).json({ message: 'Not authorized to share this document' });
+    }
+
+    // Check if document already has a VALID share link for this permission level
+    if (document.shareSettings?.permissionLinks?.[req.body.defaultPermission]?.url && 
+        document.shareSettings?.permissionLinks?.[req.body.defaultPermission]?.token) {
+      const existingLink = document.shareSettings.permissionLinks[req.body.defaultPermission];
+      return res.json({
+        message: `Document already has a ${req.body.defaultPermission} share link`,
+        shareUrl: existingLink.url,
+        shareToken: existingLink.token,
+        permission: req.body.defaultPermission,
+        shareSettings: document.shareSettings
+      });
+    }
+
+    // Generate random share token for this permission level
+    const shareToken = uuidv4().replace(/-/g, '').substring(0, 16);
+    const shareUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/shared/${shareToken}`;
+
+    // Initialize shareSettings if it doesn't exist
+    if (!document.shareSettings) {
+      document.shareSettings = {
+        isPublic: true,
+        permissionLinks: {},
+        defaultPermission: req.body.defaultPermission,
+        allowComments: req.body.allowComments,
+        allowDownload: req.body.allowDownload,
+        createdAt: new Date(),
+        createdBy: req.user._id
+      };
+    }
+
+    // Initialize permissionLinks if it doesn't exist
+    if (!document.shareSettings.permissionLinks) {
+      document.shareSettings.permissionLinks = {};
+    }
+
+    // Add the new permission link
+    document.shareSettings.permissionLinks[req.body.defaultPermission] = {
+      token: shareToken,
+      url: shareUrl
+    };
+
+    // Update other settings
+    document.shareSettings.allowComments = req.body.allowComments;
+    document.shareSettings.allowDownload = req.body.allowDownload;
+
+    document.isShared = true;
+    document.shareLink = shareUrl; // Keep for backward compatibility
+
+    await document.save();
+
+    res.json({
+      message: 'Share link generated successfully',
+      shareUrl,
+      shareToken,
+      permission: req.body.defaultPermission,
+      shareSettings: document.shareSettings
+    });
+
+  } catch (error) {
+    console.error('Generate share link error:', error);
+    res.status(500).json({
+      message: 'Server error while generating share link',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// @route   PUT /api/documents/:id/share
+// @desc    Update share settings for a document
+// @access  Private
+router.put('/:id/share', [
+  body('isPublic').isBoolean().withMessage('isPublic must be a boolean'),
+  body('defaultPermission').isIn(['read', 'write', 'comment']).withMessage('Invalid permission level'),
+  body('allowComments').isBoolean().withMessage('allowComments must be a boolean'),
+  body('allowDownload').isBoolean().withMessage('allowDownload must be a boolean'),
+  body('expiresAt').optional().isISO8601().withMessage('expiresAt must be a valid date')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Check if user is owner or has write permission
+    if (document.ownerId.toString() !== req.user._id.toString() && 
+        !document.collaborators.some(collab => 
+          collab.user.toString() === req.user._id.toString() && 
+          collab.permission === 'write'
+        )) {
+      return res.status(403).json({ message: 'Not authorized to update share settings' });
+    }
+
+    if (!document.shareSettings) {
+      return res.status(400).json({ message: 'Document is not shared' });
+    }
+
+    // Update share settings
+    document.shareSettings.isPublic = req.body.isPublic;
+    document.shareSettings.defaultPermission = req.body.defaultPermission;
+    document.shareSettings.allowComments = req.body.allowComments;
+    document.shareSettings.allowDownload = req.body.allowDownload;
+    if (req.body.expiresAt) {
+      document.shareSettings.expiresAt = new Date(req.body.expiresAt);
+    }
+
+    await document.save();
+
+    res.json({
+      message: 'Share settings updated successfully',
+      shareSettings: document.shareSettings
+    });
+
+  } catch (error) {
+    console.error('Update share settings error:', error);
+    res.status(500).json({
+      message: 'Server error while updating share settings',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// @route   DELETE /api/documents/:id/share
+// @desc    Revoke share link for a document
+// @access  Private
+router.delete('/:id/share', async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Check if user is owner or has write permission
+    if (document.ownerId.toString() !== req.user._id.toString() && 
+        !document.collaborators.some(collab => 
+          collab.user.toString() === req.user._id.toString() && 
+          collab.permission === 'write'
+        )) {
+      return res.status(403).json({ message: 'Not authorized to revoke share link' });
+    }
+
+    // Remove share settings
+    document.shareSettings = undefined;
+    document.isShared = false;
+    document.shareLink = undefined;
+
+    await document.save();
+
+    res.json({
+      message: 'Share link revoked successfully'
+    });
+
+  } catch (error) {
+    console.error('Revoke share link error:', error);
+    res.status(500).json({
+      message: 'Server error while revoking share link',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// @route   GET /api/documents/shared/:token
+// @desc    Get document by share token
+// @access  Private (requires authentication)
+router.get('/shared/:token', async (req, res) => {
+  try {
+    // Note: This route now requires authentication (handled by middleware)
+    // User must be logged in to access shared documents
+    
+    // Find document by checking all permission link tokens
+    const document = await Document.findOne({
+      $and: [
+        { 'shareSettings.isPublic': true },
+        {
+          $or: [
+            { 'shareSettings.permissionLinks.read.token': req.params.token },
+            { 'shareSettings.permissionLinks.comment.token': req.params.token },
+            { 'shareSettings.permissionLinks.write.token': req.params.token }
+          ]
+        }
+      ]
+    }).populate('ownerId', 'name email avatar')
+      .populate('collaborators.user', 'name email avatar');
+
+    if (!document) {
+      return res.status(404).json({ message: 'Shared document not found or link expired' });
+    }
+
+    // Check if share link has expired
+    if (document.shareSettings.expiresAt && new Date() > new Date(document.shareSettings.expiresAt)) {
+      return res.status(410).json({ message: 'Share link has expired' });
+    }
+
+    // Determine the permission level for this token
+    let permission = 'read';
+    if (document.shareSettings.permissionLinks.write?.token === req.params.token) {
+      permission = 'write';
+    } else if (document.shareSettings.permissionLinks.comment?.token === req.params.token) {
+      permission = 'comment';
+    }
+
+    // Return document with share settings and permission
+    res.json({
+      document: {
+        id: document._id,
+        title: document.title,
+        content: document.content,
+        ownerId: document.ownerId,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+        shareSettings: {
+          ...document.shareSettings.toObject(),
+          accessPermission: permission // The specific permission for this token
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get shared document error:', error);
+    res.status(500).json({
+      message: 'Server error while fetching shared document',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 export default router;

@@ -36,10 +36,34 @@ const documentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  shareLink: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   shareSettings: {
     isPublic: {
       type: Boolean,
       default: false
+    },
+    permissionLinks: {
+      read: {
+        token: String,
+        url: String
+      },
+      comment: {
+        token: String,
+        url: String
+      },
+      write: {
+        token: String,
+        url: String
+      }
+    },
+    defaultPermission: {
+      type: String,
+      enum: ['read', 'write', 'comment'],
+      default: 'read'
     },
     allowComments: {
       type: Boolean,
@@ -49,13 +73,16 @@ const documentSchema = new mongoose.Schema({
       type: Boolean,
       default: true
     },
-    shareLink: {
-      type: String,
-      unique: true,
-      sparse: true
-    },
     expiresAt: {
       type: Date
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     }
   },
   tags: [{
